@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签到签退系统 - 管理面板</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 导航栏 -->
+        <header class="header">
+            <h1>签到签退管理系统</h1>
+            <div class="user-info">
+                <span id="username">管理员</span>
+                <button id="logoutBtn" class="btn btn-secondary">退出登录</button>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 侧边栏 -->
+            <aside class="sidebar">
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active" data-section="tables">签到表管理</a>
+                    <a href="#" class="nav-item" data-section="members">成员管理</a>
+                    <a href="#" class="nav-item" data-section="records">签到记录</a>
+                    <a href="#" class="nav-item" data-section="settings">系统设置</a>
+                </nav>
+            </aside>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <!-- 签到表管理 -->
+                <section id="tables" class="content-section active">
+                    <div class="section-header">
+                        <h2>签到表管理</h2>
+                        <button class="btn btn-primary" id="createTableBtn">
+                            <span>➕</span> 创建新签到表
+                        </button>
+                    </div>
+
+                    <div class="table-list">
+                        <div class="card">
+                            <h3>签到表列表</h3>
+                            <table class="data-table" id="tablesTable">
+                                <thead>
+                                    <tr>
+                                        <th>表格名称</th>
+                                        <th>创建时间</th>
+                                        <th>成员数量</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablesTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 成员管理 -->
+                <section id="members" class="content-section">
+                    <div class="section-header">
+                        <h2>成员管理</h2>
+                        <button class="btn btn-primary" id="addMemberBtn">
+                            <span>➕</span> 添加成员
+                        </button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="tableFilter" class="form-select">
+                            <option value="">选择签到表</option>
+                        </select>
+                    </div>
+
+                    <div class="members-list">
+                        <div class="card">
+                            <h3>成员列表</h3>
+                            <table class="data-table" id="membersTable">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAll">
+                                        </th>
+                                        <th>姓名</th>
+                                        <th>学号/工号</th>
+                                        <th>联系方式</th>
+                                        <th>加入时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                            <div class="batch-actions">
+                                <button class="btn btn-danger" id="batchDeleteBtn">批量删除</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 签到记录 -->
+                <section id="records" class="content-section">
+                    <div class="section-header">
+                        <h2>签到记录</h2>
+                        <button class="btn btn-primary" id="manualRecordBtn">
+                            <span>➕</span> 手动记录
+                        </button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="recordTableFilter" class="form-select">
+                            <option value="">选择签到表</option>
+                        </select>
+                        <input type="date" id="recordDateFilter" class="form-control" placeholder="筛选日期">
+                        <button class="btn btn-secondary" id="clearFilterBtn">清除筛选</button>
+                    </div>
+
+                    <div class="records-list">
+                        <div class="card">
+                            <h3>签到签退记录</h3>
+                            <table class="data-table" id="recordsTable">
+                                <thead>
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>学号/工号</th>
+                                        <th>签到日期</th>
+                                        <th>签到时间</th>
+                                        <th>签退日期</th>
+                                        <th>签退时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recordsTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 系统设置 -->
+                <section id="settings" class="content-section">
+                    <div class="section-header">
+                        <h2>系统设置</h2>
+                    </div>
+
+                    <div class="settings-container">
+                        <!-- 当前活动表格设置 -->
+                        <div class="card">
+                            <h3>当前活动表格</h3>
+                            <div class="form-group">
+                                <label for="activeTable">选择当前签到/签退的目标表格</label>
+                                <select id="activeTable" class="form-select">
+                                    <option value="">请选择表格</option>
+                                </select>
+                                <button class="btn btn-primary" id="setActiveTableBtn">设置为活动表格</button>
+                            </div>
+                            <div class="current-active" id="currentActiveDisplay">
+                                <strong>当前活动表格：</strong><span id="activeTableName">未设置</span>
+                            </div>
+                        </div>
+
+                        <!-- 签到/签退模式设置 -->
+                        <div class="card">
+                            <h3>签到/签退模式</h3>
+                            <div class="mode-selector">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" name="mode" value="checkin" checked>
+                                        <span class="mode-label">
+                                            <strong>签到模式</strong>
+                                            <small>用于记录签到时间</small>
+                                        </span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" name="mode" value="checkout">
+                                        <span class="mode-label">
+                                            <strong>签退模式</strong>
+                                            <small>用于记录签退时间</small>
+                                        </span>
+                                    </label>
+                                </div>
+                                <button class="btn btn-primary" id="setModeBtn">应用设置</button>
+                            </div>
+                            <div class="current-mode" id="currentModeDisplay">
+                                <strong>当前模式：</strong><span id="modeName">签到模式</span>
+                            </div>
+                        </div>
+
+                        <!-- 导出设置 -->
+                        <div class="card">
+                            <h3>数据导出</h3>
+                            <div class="form-group">
+                                <label for="exportTable">选择要导出的表格</label>
+                                <select id="exportTable" class="form-select">
+                                    <option value="">请选择表格</option>
+                                </select>
+                            </div>
+                            <div class="export-options">
+                                <button class="btn btn-success" id="exportExcelBtn">
+                                    <span>📊</span> 导出为 Excel
+                                </button>
+                                <button class="btn btn-success" id="exportCsvBtn">
+                                    <span>📄</span> 导出为 CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- 创建签到表模态框 -->
+    <div id="createTableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>创建新签到表</h3>
+                <span class="close" data-modal="createTableModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="createTableForm">
+                    <div class="form-group">
+                        <label for="tableName">表格名称 *</label>
+                        <input type="text" id="tableName" name="tableName" required placeholder="例如：2025年10月签到表">
+                    </div>
+                    <div class="form-group">
+                        <label for="tableDescription">表格描述</label>
+                        <textarea id="tableDescription" name="tableDescription" rows="3" placeholder="选填"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="createTableModal">取消</button>
+                        <button type="submit" class="btn btn-primary">创建</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加成员模态框 -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加成员</h3>
+                <span class="close" data-modal="addMemberModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <div class="form-group">
+                        <label for="memberTable">选择签到表 *</label>
+                        <select id="memberTable" name="memberTable" class="form-select" required>
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="memberName">姓名 *</label>
+                        <input type="text" id="memberName" name="memberName" required placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="memberId">学号/工号 *</label>
+                        <input type="text" id="memberId" name="memberId" required placeholder="请输入学号或工号">
+                    </div>
+                    <div class="form-group">
+                        <label for="memberContact">联系方式</label>
+                        <input type="text" id="memberContact" name="memberContact" placeholder="选填">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="addMemberModal">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>确认操作</h3>
+                <span class="close" data-modal="confirmModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">确定要执行此操作吗？</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-modal="confirmModal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmBtn">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手动记录签到/签退模态框 -->
+    <div id="manualRecordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>手动记录签到/签退</h3>
+                <span class="close" data-modal="manualRecordModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="manualRecordForm">
+                    <div class="form-group">
+                        <label for="recordTable">选择签到表 *</label>
+                        <select id="recordTable" name="recordTable" class="form-select" required>
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordMember">选择成员 *</label>
+                        <select id="recordMember" name="recordMember" class="form-select" required>
+                            <option value="">请先选择签到表</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordType">记录类型 *</label>
+                        <select id="recordType" name="recordType" class="form-select" required>
+                            <option value="checkin">签到</option>
+                            <option value="checkout">签退</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordDate">日期 *</label>
+                        <input type="date" id="recordDate" name="recordDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordTime">时间 *</label>
+                        <input type="time" id="recordTime" name="recordTime" class="form-control" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="manualRecordModal">取消</button>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

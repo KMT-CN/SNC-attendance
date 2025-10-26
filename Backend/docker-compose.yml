@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # MongoDB 数据库
+  mongodb:
+    image: mongo:7.0
+    container_name: snc-attendance-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: snc_attendance_2025
+      MONGO_INITDB_DATABASE: attendance
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "127.0.0.1:27017:27017"
+    networks:
+      - attendance-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node.js 后端服务
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: snc-attendance-backend
+    restart: always
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-10234}
+      MONGODB_URI: mongodb://admin:snc_attendance_2025@mongodb:27017/attendance?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-snc_attendance_jwt_secret_key_2025_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      # 只绑定到 127.0.0.1，用户自行配置反向代理
+      - "127.0.0.1:${BACKEND_PORT:-10234}:${BACKEND_PORT:-10234}"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - attendance-network
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  attendance-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
