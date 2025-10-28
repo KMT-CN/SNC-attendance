@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读卡器管理 - 签到签退系统</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .card-reader-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .card-display {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .card-display.active {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+
+        .card-display.success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .card-display.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .card-id {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .member-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .log-info {
+            color: #007bff;
+        }
+
+        .mode-display {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mode-checkin {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .mode-checkout {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-reader-container">
+        <a href="dashboard.html" class="back-link">← 返回管理面板</a>
+        
+        <h1>读卡器管理</h1>
+
+        <!-- 连接状态卡片 -->
+        <div class="status-card">
+            <div class="status-indicator">
+                <div class="status-text">
+                    <span class="status-dot disconnected" id="statusDot"></span>
+                    <span id="statusText">读卡器未连接</span>
+                </div>
+                <button class="btn btn-primary" id="connectBtn">连接读卡器</button>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">当前签到表：</span>
+                <span class="info-value" id="currentTable">未设置</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">当前模式：</span>
+                <span class="mode-display mode-checkin" id="currentMode">签到模式</span>
+            </div>
+        </div>
+
+        <!-- 刷卡区域 -->
+        <div class="status-card">
+            <h3>刷卡区域</h3>
+            <div class="card-display" id="cardDisplay">
+                <div style="font-size: 48px; color: #ccc;">📇</div>
+                <p style="color: #6c757d; margin-top: 10px;">等待刷卡...</p>
+                <div class="card-id" id="cardId"></div>
+            </div>
+
+            <div id="memberInfo" style="display: none;">
+                <div class="member-info">
+                    <h4>成员信息</h4>
+                    <div class="info-row">
+                        <span class="info-label">姓名：</span>
+                        <span class="info-value" id="memberName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">学号/工号：</span>
+                        <span class="info-value" id="memberEmployeeId">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">操作时间：</span>
+                        <span class="info-value" id="operationTime">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">操作结果：</span>
+                        <span class="info-value" id="operationResult">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作日志 -->
+        <div class="status-card">
+            <h3>操作日志</h3>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">
+                    <span class="log-time">等待操作...</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="clearLogBtn">清空日志</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/cardReader.js"></script>
+</body>
+</html>

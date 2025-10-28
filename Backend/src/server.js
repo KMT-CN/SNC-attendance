@@ -10,6 +10,7 @@ const tableRoutes = require('./routes/tables');
 const memberRoutes = require('./routes/members');
 const recordRoutes = require('./routes/records');
 const settingsRoutes = require('./routes/settings');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,7 @@ app.use('/api/tables', tableRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/records', recordRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/users', userRoutes);
 
 // 健康检查
 app.get('/health', (req, res) => {

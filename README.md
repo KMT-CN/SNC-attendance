@@ -362,6 +362,24 @@ cd Frontend
 npx http-server -p 8080
 ```
 
+### 系统重置与测试
+
+当你需要重新测试部署流程或清除所有数据时：
+
+```powershell
+# Windows PowerShell
+.\reset-data.ps1    # 仅清除数据（保留镜像和配置）
+.\reset.ps1         # 完全重置（删除所有容器、卷、镜像和配置）
+```
+
+```bash
+# Linux/macOS
+./reset-data.sh     # 仅清除数据（保留镜像和配置）
+./reset.sh          # 完全重置（删除所有容器、卷、镜像和配置）
+```
+
+详细说明请查看：[DOCKER-RESET.md](./DOCKER-RESET.md)
+
 ### 数据库管理
 
 ```bash
@@ -373,6 +391,11 @@ docker exec -it snc-mongodb mongosh \
 use attendance_db
 show collections
 db.users.find()
+
+# 或使用 Node.js 脚本（无需 mongosh）
+cd Backend
+node check-users.js   # 查看所有用户
+node clear-users.js   # 清除所有用户
 ```
 
 ### 查看日志
@@ -409,15 +432,18 @@ MIT License
 1. 查看 [DEPLOYMENT-QUICK.md](./DEPLOYMENT-QUICK.md) 快速部署指南
 2. 查看 [Backend/REVERSE_PROXY.md](./Backend/REVERSE_PROXY.md) 反向代理配置
 3. 查看 [DEPLOYMENT.md](./DEPLOYMENT.md) 详细部署文档
-4. 检查浏览器控制台错误信息
-5. 查看 Docker 日志：`docker-compose logs`
-6. 提交 GitHub Issue
+4. 查看 [DOCKER-RESET.md](./DOCKER-RESET.md) 系统重置指南
+5. 查看 [USER-MANAGEMENT.md](./USER-MANAGEMENT.md) 用户管理文档
+6. 检查浏览器控制台错误信息
+7. 查看 Docker 日志：`docker-compose logs`
+8. 提交 GitHub Issue
 
 **常见问题**：
 - 502 错误 → 检查后端是否运行：`curl http://127.0.0.1:10234/health`
 - CORS 错误 → 修改 Backend/.env 中的 CORS_ORIGIN
 - 登录失败 → 确认已创建管理员账户
 - 无法访问 → 检查反向代理配置和防火墙
+- 需要重新测试 → 使用 `reset-data.ps1` 或 `reset.ps1` 重置系统
 
 ---
 

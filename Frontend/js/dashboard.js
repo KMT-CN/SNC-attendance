@@ -18,12 +18,28 @@ let records = [];
 let selectedMembers = [];
 let activeTable = null;
 let currentMode = 'checkin';
+let users = [];
+let currentUser = null;
 
 // 初始化应用
 function initializeApp() {
     // 显示用户名
     const usernameElement = document.getElementById('username');
     usernameElement.textContent = localStorage.getItem('username') || '管理员';
+    
+    // 获取当前用户信息
+    const userRole = localStorage.getItem('userRole');
+    const isSuperAdmin = localStorage.getItem('isSuperAdmin') === 'true';
+    currentUser = {
+        username: localStorage.getItem('username'),
+        role: userRole,
+        isSuperAdmin: isSuperAdmin
+    };
+
+    // 如果是超级管理员，显示用户管理菜单
+    if (isSuperAdmin) {
+        document.getElementById('usersNavItem').style.display = 'block';
+    }
 
     // 加载数据
     loadData();
@@ -53,6 +69,16 @@ async function loadData() {
         const settings = settingsResponse.data || {};
         activeTable = settings.activeTable || null;
         currentMode = settings.mode || 'checkin';
+
+        // 如果是超级管理员，加载用户列表
+        if (currentUser && currentUser.isSuperAdmin) {
+            try {
+                const usersResponse = await userAPI.getAll();
+                users = usersResponse.data || [];
+            } catch (error) {
+                console.error('Load users error:', error);
+            }
+        }
 
     } catch (error) {
         console.error('Load data error:', error);
@@ -109,6 +135,9 @@ function bindEvents() {
     document.getElementById('manualRecordForm').addEventListener('submit', handleManualRecord);
     document.getElementById('recordTable').addEventListener('change', handleRecordTableChange);
 
+    // 绑定卡片
+    document.getElementById('bindCardForm').addEventListener('submit', handleBindCard);
+
     // 记录筛选
     document.getElementById('recordTableFilter').addEventListener('change', updateRecordsDisplay);
     document.getElementById('recordDateFilter').addEventListener('change', updateRecordsDisplay);
@@ -123,6 +152,26 @@ function bindEvents() {
     // 导出
     document.getElementById('exportExcelBtn').addEventListener('click', () => handleExport('excel'));
     document.getElementById('exportCsvBtn').addEventListener('click', () => handleExport('csv'));
+
+    // 用户管理（仅超级管理员）
+    if (currentUser && currentUser.isSuperAdmin) {
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', openAddUserModal);
+        }
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', handleAddUser);
+        }
+        const editUserForm = document.getElementById('editUserForm');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', handleEditUser);
+        }
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', handleChangePassword);
+        }
+    }
 
     // 模态框关闭
     const closeButtons = document.querySelectorAll('.close, [data-modal]');
@@ -175,6 +224,9 @@ function updateDisplay() {
     updateRecordsDisplay();
     updateSettingsDisplay();
     updateSelectOptions();
+    if (currentUser && currentUser.isSuperAdmin) {
+        updateUsersDisplay();
+    }
 }
 
 // 更新签到表显示
@@ -220,22 +272,34 @@ function updateMembersDisplay() {
     }
 
     if (filteredMembers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无成员数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无成员数据</td></tr>';
         return;
     }
 
-    tbody.innerHTML = filteredMembers.map(member => `
-        <tr>
-            <td><input type="checkbox" class="member-checkbox" data-id="${member.id}"></td>
-            <td>${escapeHtml(member.name)}</td>
-            <td>${escapeHtml(member.employeeId)}</td>
-            <td>${escapeHtml(member.contact || '-')}</td>
-            <td>${formatDate(member.joinedAt)}</td>
-            <td class="actions">
-                <button class="btn btn-danger" onclick="deleteMember('${member.id}')">删除</button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = filteredMembers.map(member => {
+        const cardStatus = member.cardId ? 
+            `<span style="color: #28a745;">✓ 已绑定</span>` : 
+            `<span style="color: #6c757d;">未绑定</span>`;
+        
+        const cardAction = member.cardId ? 
+            `<button class="btn btn-secondary" onclick="unbindCard('${member.id}')">解绑卡片</button>` : 
+            `<button class="btn btn-primary" onclick="bindCard('${member.id}', '${escapeHtml(member.name)}', '${escapeHtml(member.employeeId)}')">绑定卡片</button>`;
+        
+        return `
+            <tr>
+                <td><input type="checkbox" class="member-checkbox" data-id="${member.id}"></td>
+                <td>${escapeHtml(member.name)}</td>
+                <td>${escapeHtml(member.employeeId)}</td>
+                <td>${escapeHtml(member.contact || '-')}</td>
+                <td>${cardStatus}</td>
+                <td>${formatDate(member.joinedAt)}</td>
+                <td class="actions">
+                    ${cardAction}
+                    <button class="btn btn-danger" onclick="deleteMember('${member.id}')">删除</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 
     // 绑定复选框事件
     const checkboxes = document.querySelectorAll('.member-checkbox');
@@ -845,4 +909,253 @@ function formatTimeOnly(date) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
+}
+
+// ============ 卡片绑定功能 ============
+
+// 打开绑定卡片对话框
+function bindCard(memberId, memberName, memberEmployeeId) {
+    const modal = document.getElementById('bindCardModal');
+    document.getElementById('bindMemberId').value = memberId;
+    document.getElementById('bindMemberName').value = memberName;
+    document.getElementById('bindMemberEmployeeId').value = memberEmployeeId;
+    document.getElementById('cardId').value = '';
+    modal.style.display = 'block';
+}
+
+// 处理绑定卡片表单提交
+async function handleBindCard(e) {
+    e.preventDefault();
+    
+    const memberId = document.getElementById('bindMemberId').value;
+    const cardId = document.getElementById('cardId').value.trim();
+    
+    if (!cardId) {
+        showToast('请输入卡片ID', 'error');
+        return;
+    }
+    
+    try {
+        const response = await memberAPI.bindCard(memberId, cardId);
+        
+        if (response.success) {
+            showToast('卡片绑定成功');
+            closeModal('bindCardModal');
+            await loadData();
+            updateDisplay();
+        }
+    } catch (error) {
+        console.error('绑定卡片失败:', error);
+        showToast('绑定失败: ' + error.message, 'error');
+    }
+}
+
+// 解绑卡片
+function unbindCard(memberId) {
+    showConfirm('确定要解绑该成员的卡片吗？', async () => {
+        try {
+            const response = await memberAPI.unbindCard(memberId);
+            
+            if (response.success) {
+                showToast('卡片解绑成功');
+                await loadData();
+                updateDisplay();
+            }
+        } catch (error) {
+            console.error('解绑卡片失败:', error);
+            showToast('解绑失败: ' + error.message, 'error');
+        }
+    });
+}
+
+// ============ 用户管理功能 ============
+
+// 更新用户列表显示
+function updateUsersDisplay() {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无用户数据</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+        const roleText = user.isSuperAdmin ? '超级管理员' : (user.role === 'admin' ? '管理员' : '普通用户');
+        const canEdit = !user.isSuperAdmin || user._id === currentUser.userId;
+        const canDelete = !user.isSuperAdmin && user._id !== localStorage.getItem('userId');
+        
+        return `
+            <tr>
+                <td>${escapeHtml(user.username)}</td>
+                <td>
+                    <span class="badge ${user.isSuperAdmin ? 'badge-superadmin' : (user.role === 'admin' ? 'badge-admin' : 'badge-user')}">
+                        ${roleText}
+                    </span>
+                </td>
+                <td>${formatDate(user.createdAt)}</td>
+                <td>${formatDate(user.updatedAt)}</td>
+                <td>
+                    ${canEdit ? `<button class="btn btn-sm btn-secondary" onclick="editUser('${user._id}', '${escapeHtml(user.username)}', '${user.role}', ${user.isSuperAdmin})">编辑</button>` : ''}
+                    <button class="btn btn-sm btn-secondary" onclick="openChangePasswordModal('${user._id}', '${escapeHtml(user.username)}')">改密码</button>
+                    ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}', '${escapeHtml(user.username)}')">删除</button>` : ''}
+                    ${!canEdit && !canDelete ? '<span style="color: #999;">-</span>' : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 打开添加用户模态框
+function openAddUserModal() {
+    const modal = document.getElementById('addUserModal');
+    document.getElementById('addUserForm').reset();
+    modal.classList.add('show');
+}
+
+// 处理添加用户
+async function handleAddUser(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const role = document.getElementById('newUserRole').value;
+    
+    if (!username || !password) {
+        showToast('请填写完整信息', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showToast('密码至少6个字符', 'error');
+        return;
+    }
+    
+    try {
+        const response = await userAPI.create(username, password, role);
+        
+        if (response.success) {
+            showToast('用户添加成功');
+            closeModal('addUserModal');
+            await loadData();
+            updateDisplay();
+        }
+    } catch (error) {
+        console.error('添加用户失败:', error);
+        showToast('添加失败: ' + error.message, 'error');
+    }
+}
+
+// 编辑用户
+function editUser(userId, username, role, isSuperAdmin) {
+    if (isSuperAdmin && userId !== localStorage.getItem('userId')) {
+        showToast('不能修改超级管理员信息', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('editUserModal');
+    document.getElementById('editUserId').value = userId;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editUserRole').value = role;
+    
+    // 超级管理员不能修改自己的角色
+    if (isSuperAdmin) {
+        document.getElementById('editUserRole').disabled = true;
+    } else {
+        document.getElementById('editUserRole').disabled = false;
+    }
+    
+    modal.classList.add('show');
+}
+
+// 处理编辑用户
+async function handleEditUser(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('editUserId').value;
+    const username = document.getElementById('editUsername').value.trim();
+    const role = document.getElementById('editUserRole').value;
+    
+    if (!username) {
+        showToast('用户名不能为空', 'error');
+        return;
+    }
+    
+    try {
+        const response = await userAPI.update(userId, username, role);
+        
+        if (response.success) {
+            showToast('用户信息更新成功');
+            closeModal('editUserModal');
+            await loadData();
+            updateDisplay();
+        }
+    } catch (error) {
+        console.error('更新用户失败:', error);
+        showToast('更新失败: ' + error.message, 'error');
+    }
+}
+
+// 打开修改密码模态框
+function openChangePasswordModal(userId, username) {
+    const modal = document.getElementById('changePasswordModal');
+    document.getElementById('changePasswordUserId').value = userId;
+    document.getElementById('changePasswordUsername').value = username;
+    document.getElementById('newUserPassword').value = '';
+    document.getElementById('confirmUserPassword').value = '';
+    modal.classList.add('show');
+}
+
+// 处理修改密码
+async function handleChangePassword(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('changePasswordUserId').value;
+    const newPassword = document.getElementById('newUserPassword').value;
+    const confirmPassword = document.getElementById('confirmUserPassword').value;
+    
+    if (!newPassword || !confirmPassword) {
+        showToast('请填写完整信息', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showToast('密码至少6个字符', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showToast('两次输入的密码不一致', 'error');
+        return;
+    }
+    
+    try {
+        const response = await userAPI.changePassword(userId, newPassword);
+        
+        if (response.success) {
+            showToast('密码修改成功');
+            closeModal('changePasswordModal');
+        }
+    } catch (error) {
+        console.error('修改密码失败:', error);
+        showToast('修改失败: ' + error.message, 'error');
+    }
+}
+
+// 删除用户
+function deleteUser(userId, username) {
+    showConfirm(`确定要删除用户"${username}"吗？`, async () => {
+        try {
+            const response = await userAPI.delete(userId);
+            
+            if (response.success) {
+                showToast('用户删除成功');
+                await loadData();
+                updateDisplay();
+            }
+        } catch (error) {
+            console.error('删除用户失败:', error);
+            showToast('删除失败: ' + error.message, 'error');
+        }
+    });
 }

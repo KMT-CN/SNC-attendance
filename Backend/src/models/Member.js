@@ -20,6 +20,12 @@ const memberSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  cardId: {
+    type: String,
+    default: '',
+    trim: true,
+    sparse: true
+  },
   joinedAt: {
     type: Date,
     default: Date.now
@@ -31,5 +37,6 @@ const memberSchema = new mongoose.Schema({
 });
 
 memberSchema.index({ tableId: 1, employeeId: 1 });
+memberSchema.index({ cardId: 1 }, { sparse: true, unique: true });
 
 module.exports = mongoose.model('Member', memberSchema);

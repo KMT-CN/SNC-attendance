@@ -10,6 +10,8 @@
     <div class="login-container">
         <div class="login-box">
             <h1>签到签退管理系统</h1>
+            
+            <!-- 登录表单 -->
             <form id="loginForm">
                 <div class="form-group">
                     <label for="username">用户名</label>
@@ -21,6 +23,38 @@
                 </div>
                 <button type="submit" class="btn btn-primary">登录</button>
             </form>
+
+            <!-- 注册表单（仅首次使用时显示） -->
+            <form id="registerForm" style="display: none;">
+                <div class="info-box" id="setupInfoBox">
+                    <p><strong>🎉 欢迎首次使用！</strong></p>
+                    <p>系统检测到还没有用户，请创建第一个账户。</p>
+                    <p><strong>第一个注册的用户将自动成为超级管理员。</strong></p>
+                    <p style="margin-top: 10px; font-size: 13px; color: #856404;">
+                        ℹ️ 初始化完成后，所有新用户必须由超级管理员在"用户管理"中添加，无法自行注册。
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label for="regUsername">用户名 *</label>
+                    <input type="text" id="regUsername" name="regUsername" required placeholder="设置管理员用户名">
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">密码 *</label>
+                    <input type="password" id="regPassword" name="regPassword" required 
+                           placeholder="设置密码（至少6个字符）" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码 *</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required 
+                           placeholder="再次输入密码" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="registerSubmitBtn">创建超级管理员账户</button>
+            </form>
+
+            <div class="form-footer">
+                <button id="toggleFormBtn" class="link-btn">还没有账户？点击注册</button>
+            </div>
+
             <div id="errorMsg" class="error-msg"></div>
         </div>
     </div>

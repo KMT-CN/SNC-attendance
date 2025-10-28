@@ -4,7 +4,7 @@ const API_CONFIG = {
     // 后端默认监听 127.0.0.1:10234，需要通过反向代理访问
     
     // 生产环境（使用反向代理域名）
-    BASE_URL: 'https://your-domain.com/api',
+    BASE_URL: 'http://127.0.0.1:10234/api',
     
     // 或者使用子域名
     // BASE_URL: 'https://api.your-domain.com/api',
@@ -110,6 +110,11 @@ const api = new API(API_CONFIG.BASE_URL);
 
 // 认证相关 API
 const authAPI = {
+    // 检查系统是否需要初始化设置
+    checkSetup: () => fetch(`${API_CONFIG.BASE_URL}/auth/check-setup`)
+        .then(res => res.json())
+        .catch(() => ({ success: false, data: { hasUsers: true, needsSetup: false } })),
+    
     // 登录
     login: (username, password) => api.post('/auth/login', { username, password }),
     
@@ -145,7 +150,16 @@ const memberAPI = {
     delete: (id) => api.delete(`/members/${id}`),
     
     // 批量删除成员
-    batchDelete: (ids) => api.post('/members/batch-delete', { ids })
+    batchDelete: (ids) => api.post('/members/batch-delete', { ids }),
+    
+    // 绑定卡片
+    bindCard: (memberId, cardId) => api.put(`/members/${memberId}/bind-card`, { cardId }),
+    
+    // 解绑卡片
+    unbindCard: (memberId) => api.put(`/members/${memberId}/unbind-card`, {}),
+    
+    // 根据卡片ID查询成员
+    getByCard: (cardId) => api.get(`/members/by-card/${cardId}`)
 };
 
 // 签到记录相关 API
@@ -156,6 +170,10 @@ const recordAPI = {
     // 创建/更新签到记录
     create: (tableId, memberId, recordType, date, time) => 
         api.post('/records', { tableId, memberId, recordType, date, time }),
+    
+    // 刷卡签到/签退
+    cardCheckin: (cardId, tableId, recordType) => 
+        api.post('/records/card-checkin', { cardId, tableId, recordType }),
     
     // 更新记录
     update: (id, data) => api.put(`/records/${id}`, data),
@@ -174,4 +192,28 @@ const settingsAPI = {
     
     // 设置模式
     setMode: (mode) => api.put('/settings/mode', { mode })
+};
+
+// 用户管理相关 API
+const userAPI = {
+    // 获取所有用户
+    getAll: () => api.get('/users'),
+    
+    // 获取单个用户
+    getById: (id) => api.get(`/users/${id}`),
+    
+    // 创建用户
+    create: (username, password, role) => api.post('/users', { username, password, role }),
+    
+    // 更新用户信息
+    update: (id, username, role) => api.put(`/users/${id}`, { username, role }),
+    
+    // 修改用户密码
+    changePassword: (id, newPassword) => api.put(`/users/${id}/password`, { newPassword }),
+    
+    // 删除用户
+    delete: (id) => api.delete(`/users/${id}`),
+    
+    // 批量删除用户
+    batchDelete: (userIds) => api.post('/users/batch-delete', { userIds })
 };

@@ -213,4 +213,112 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// 刷卡签到/签退
+router.post('/card-checkin', [
+  body('cardId').trim().notEmpty().withMessage('卡片ID不能为空'),
+  body('tableId').notEmpty().withMessage('签到表ID不能为空'),
+  body('recordType').isIn(['checkin', 'checkout']).withMessage('记录类型无效')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg
+      });
+    }
+
+    const { cardId, tableId, recordType } = req.body;
+    
+    // 根据卡片ID查找成员
+    const member = await Member.findOne({ cardId });
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到绑定此卡片的成员'
+      });
+    }
+
+    // 检查成员是否属于该签到表
+    if (member.tableId.toString() !== tableId) {
+      return res.status(400).json({
+        success: false,
+        message: '该成员不属于当前签到表'
+      });
+    }
+
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+    const time = now.toTimeString().split(' ')[0].substring(0, 5);
+
+    // 查找当天是否已有记录
+    let record = await Record.findOne({
+      tableId,
+      memberId: member._id,
+      checkinDate: date
+    });
+
+    if (recordType === 'checkin') {
+      if (record) {
+        // 更新签到时间
+        record.checkinTime = time;
+        await record.save();
+      } else {
+        // 创建新记录
+        record = new Record({
+          tableId,
+          memberId: member._id,
+          checkinDate: date,
+          checkinTime: time
+        });
+        await record.save();
+      }
+
+      return res.json({
+        success: true,
+        message: '签到成功',
+        data: {
+          id: record._id,
+          memberName: member.name,
+          memberEmployeeId: member.employeeId,
+          checkinDate: record.checkinDate,
+          checkinTime: record.checkinTime,
+          recordType: 'checkin'
+        }
+      });
+    } else {
+      // 签退
+      if (!record) {
+        return res.status(400).json({
+          success: false,
+          message: '未找到签到记录，请先签到'
+        });
+      }
+
+      record.checkoutDate = date;
+      record.checkoutTime = time;
+      await record.save();
+
+      return res.json({
+        success: true,
+        message: '签退成功',
+        data: {
+          id: record._id,
+          memberName: member.name,
+          memberEmployeeId: member.employeeId,
+          checkoutDate: record.checkoutDate,
+          checkoutTime: record.checkoutTime,
+          recordType: 'checkout'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Card checkin error:', error);
+    res.status(500).json({
+      success: false,
+      message: '刷卡签到失败'
+    });
+  }
+});
+
 module.exports = router;

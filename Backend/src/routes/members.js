@@ -25,6 +25,7 @@ router.get('/', async (req, res) => {
         name: m.name,
         employeeId: m.employeeId,
         contact: m.contact,
+        cardId: m.cardId,
         joinedAt: m.joinedAt
       }))
     });
@@ -90,6 +91,7 @@ router.post('/', [
         name: member.name,
         employeeId: member.employeeId,
         contact: member.contact,
+        cardId: member.cardId,
         joinedAt: member.joinedAt
       }
     });
@@ -155,6 +157,135 @@ router.post('/batch-delete', [
     res.status(500).json({
       success: false,
       message: '批量删除失败'
+    });
+  }
+});
+
+// 绑定卡片
+router.put('/:id/bind-card', [
+  body('cardId').trim().notEmpty().withMessage('卡片ID不能为空')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg
+      });
+    }
+
+    const { cardId } = req.body;
+    const memberId = req.params.id;
+
+    // 检查成员是否存在
+    const member = await Member.findById(memberId);
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: '成员不存在'
+      });
+    }
+
+    // 检查卡片是否已被绑定
+    const existingCard = await Member.findOne({ cardId, _id: { $ne: memberId } });
+    if (existingCard) {
+      return res.status(400).json({
+        success: false,
+        message: '该卡片已被其他成员绑定'
+      });
+    }
+
+    // 绑定卡片
+    member.cardId = cardId;
+    await member.save();
+
+    res.json({
+      success: true,
+      message: '卡片绑定成功',
+      data: {
+        id: member._id,
+        name: member.name,
+        employeeId: member.employeeId,
+        cardId: member.cardId
+      }
+    });
+  } catch (error) {
+    console.error('Bind card error:', error);
+    res.status(500).json({
+      success: false,
+      message: '绑定卡片失败'
+    });
+  }
+});
+
+// 解绑卡片
+router.put('/:id/unbind-card', async (req, res) => {
+  try {
+    const memberId = req.params.id;
+
+    // 检查成员是否存在
+    const member = await Member.findById(memberId);
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: '成员不存在'
+      });
+    }
+
+    // 解绑卡片
+    member.cardId = '';
+    await member.save();
+
+    res.json({
+      success: true,
+      message: '卡片解绑成功',
+      data: {
+        id: member._id,
+        name: member.name,
+        employeeId: member.employeeId,
+        cardId: member.cardId
+      }
+    });
+  } catch (error) {
+    console.error('Unbind card error:', error);
+    res.status(500).json({
+      success: false,
+      message: '解绑卡片失败'
+    });
+  }
+});
+
+// 根据卡片ID查询成员
+router.get('/by-card/:cardId', async (req, res) => {
+  try {
+    const { cardId } = req.params;
+
+    const member = await Member.findOne({ cardId });
+    
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到绑定此卡片的成员'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: member._id,
+        tableId: member.tableId,
+        name: member.name,
+        employeeId: member.employeeId,
+        contact: member.contact,
+        cardId: member.cardId,
+        joinedAt: member.joinedAt
+      }
+    });
+  } catch (error) {
+    console.error('Get member by card error:', error);
+    res.status(500).json({
+      success: false,
+      message: '查询成员失败'
     });
   }
 });
