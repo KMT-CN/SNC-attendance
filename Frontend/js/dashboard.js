@@ -20,6 +20,8 @@ let activeTable = null;
 let currentMode = 'checkin';
 let users = [];
 let currentUser = null;
+// PN532 控制器（懒加载模块）
+let pn532Controller = null;
 
 // 初始化应用
 function initializeApp() {
@@ -49,6 +51,43 @@ function initializeApp() {
 
     // 初始显示
     updateDisplay();
+}
+
+// 启动读卡器：动态导入模块并用当前设置创建控制器
+async function startCardListener() {
+    if (pn532Controller) {
+        // 已经启动或正在运行
+        showToast('读卡器已启动或正在运行', 'info');
+        return;
+    }
+
+    try {
+        const mod = await import('./pn532.js');
+        if (!mod || !mod.createPN532) {
+            throw new Error('pn532 模块缺少 createPN532 导出');
+        }
+
+        pn532Controller = mod.createPN532(() => activeTable, () => currentMode);
+        pn532Controller.start();
+        showToast('读卡器已启动，等待刷卡...', 'success');
+    } catch (error) {
+        console.error('启动读卡器失败:', error);
+        showToast('启动读卡器失败: ' + (error.message || error), 'error');
+        pn532Controller = null;
+    }
+}
+
+// 停止读卡器（如需要）
+function stopCardListener() {
+    if (pn532Controller && pn532Controller.stop) {
+        try {
+            pn532Controller.stop();
+            showToast('读卡器已停止', 'info');
+        } catch (err) {
+            console.error('停止读卡器时出错:', err);
+        }
+    }
+    pn532Controller = null;
 }
 
 // 加载数据
@@ -137,6 +176,14 @@ function bindEvents() {
 
     // 绑定卡片
     document.getElementById('bindCardForm').addEventListener('submit', handleBindCard);
+
+    // 开始读卡（懒加载 pn532 模块）
+    const startBtn = document.getElementById('startListeningBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', async () => {
+            await startCardListener();
+        });
+    }
 
     // 记录筛选
     document.getElementById('recordTableFilter').addEventListener('change', updateRecordsDisplay);
