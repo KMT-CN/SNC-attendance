@@ -427,7 +427,7 @@ function updateSettingsDisplay() {
     // 更新当前活动表格
     const activeTableName = document.getElementById('activeTableName');
     if (activeTableName) {
-        const table = tables.find(t => t.id === parseInt(activeTable));
+        const table = tables.find(t => t.id === activeTable);
         activeTableName.textContent = table ? table.name : '未设置';
     }
 
