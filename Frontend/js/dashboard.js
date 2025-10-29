@@ -234,7 +234,8 @@ function bindEvents() {
     // 点击模态框外部关闭
     window.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
-            e.target.classList.remove('show');
+            // 点击模态外部时隐藏模态（统一使用 style.display 控制）
+            e.target.style.display = 'none';
         }
     });
 }
@@ -477,7 +478,7 @@ function updateSelectOptions() {
 
 // 打开创建表格模态框
 function openCreateTableModal() {
-    document.getElementById('createTableModal').classList.add('show');
+    showModal('createTableModal');
 }
 
 // 处理创建表格
@@ -510,7 +511,7 @@ function openAddMemberModal() {
         showToast('请先创建签到表', 'error');
         return;
     }
-    document.getElementById('addMemberModal').classList.add('show');
+    showModal('addMemberModal');
 }
 
 // 处理添加成员
@@ -628,7 +629,7 @@ function openManualRecordModal() {
     document.getElementById('recordDate').value = formatDateOnly(now);
     document.getElementById('recordTime').value = formatTimeOnly(now);
     
-    document.getElementById('manualRecordModal').classList.add('show');
+    showModal('manualRecordModal');
 }
 
 // 处理记录表格变化
@@ -880,7 +881,8 @@ function showConfirm(message, callback) {
     const confirmBtn = document.getElementById('confirmBtn');
 
     messageElement.textContent = message;
-    modal.classList.add('show');
+    // 统一使用 style.display 控制可见性（默认隐藏）
+    modal.style.display = 'block';
 
     // 移除旧的事件监听器
     const newConfirmBtn = confirmBtn.cloneNode(true);
@@ -895,7 +897,18 @@ function showConfirm(message, callback) {
 
 // 关闭模态框
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 显示模态框（取消隐藏）
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    }
 }
 
 // 显示提示
@@ -1057,7 +1070,7 @@ function updateUsersDisplay() {
 function openAddUserModal() {
     const modal = document.getElementById('addUserModal');
     document.getElementById('addUserForm').reset();
-    modal.classList.add('show');
+    showModal('addUserModal');
 }
 
 // 处理添加用户
@@ -1112,7 +1125,7 @@ function editUser(userId, username, role, isSuperAdmin) {
         document.getElementById('editUserRole').disabled = false;
     }
     
-    modal.classList.add('show');
+    showModal('editUserModal');
 }
 
 // 处理编辑用户
@@ -1150,7 +1163,7 @@ function openChangePasswordModal(userId, username) {
     document.getElementById('changePasswordUsername').value = username;
     document.getElementById('newUserPassword').value = '';
     document.getElementById('confirmUserPassword').value = '';
-    modal.classList.add('show');
+    showModal('changePasswordModal');
 }
 
 // 处理修改密码

@@ -36,6 +36,7 @@ export function createPN532(getActiveTable, getRecordType) {
 
                 cachedUid = uid;
                 console.log('Card detected with UID:', uid);
+                document.getElementById('cardId').textContent = uid;
 
                 // 先查询成员信息（使用页面全局的 memberAPI）
                 try {
