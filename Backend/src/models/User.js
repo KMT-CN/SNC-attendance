@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     enum: ['superadmin', 'admin', 'user'],
     default: 'user'
   },
+  userGroup: {
+    type: String,
+    default: '默认组'
+  },
   isSuperAdmin: {
     type: Boolean,
     default: false

@@ -283,7 +283,7 @@ function updateTablesDisplay() {
     if (!tbody) return;
 
     if (tables.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无签到表，点击"创建新签到表"开始</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无签到表，点击"创建新签到表"开始</td></tr>';
         return;
     }
 
@@ -295,6 +295,7 @@ function updateTablesDisplay() {
         return `
             <tr>
                 <td>${escapeHtml(table.name)}</td>
+                <td>${escapeHtml(table.userGroup || '默认组')}</td>
                 <td>${formatDate(table.createdAt)}</td>
                 <td>${memberCount} 人</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -1048,13 +1049,13 @@ function updateUsersDisplay() {
     if (!tbody) return;
 
     if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无用户数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无用户数据</td></tr>';
         return;
     }
 
     tbody.innerHTML = users.map(user => {
         const roleText = user.isSuperAdmin ? '超级管理员' : (user.role === 'admin' ? '管理员' : '普通用户');
-        const canEdit = !user.isSuperAdmin || user._id === currentUser.userId;
+        const canEdit = !user.isSuperAdmin || user._id === localStorage.getItem('userId');
         const canDelete = !user.isSuperAdmin && user._id !== localStorage.getItem('userId');
         
         return `
@@ -1065,13 +1066,13 @@ function updateUsersDisplay() {
                         ${roleText}
                     </span>
                 </td>
+                <td>${escapeHtml(user.userGroup || '默认组')}</td>
                 <td>${formatDate(user.createdAt)}</td>
                 <td>${formatDate(user.updatedAt)}</td>
-                <td>
-                    ${canEdit ? `<button class="btn btn-sm btn-secondary" onclick="editUser('${user._id}', '${escapeHtml(user.username)}', '${user.role}', ${user.isSuperAdmin})">编辑</button>` : ''}
+                <td class="actions">
+                    ${canEdit ? `<button class="btn btn-sm btn-secondary" onclick="editUser('${user._id}', '${escapeHtml(user.username)}', '${user.role}', ${user.isSuperAdmin}, '${escapeHtml(user.userGroup || '')}')">编辑</button>` : ''}
                     <button class="btn btn-sm btn-secondary" onclick="openChangePasswordModal('${user._id}', '${escapeHtml(user.username)}')">改密码</button>
                     ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}', '${escapeHtml(user.username)}')">删除</button>` : ''}
-                    ${!canEdit && !canDelete ? '<span style="color: #999;">-</span>' : ''}
                 </td>
             </tr>
         `;
@@ -1092,6 +1093,7 @@ async function handleAddUser(e) {
     const username = document.getElementById('newUsername').value.trim();
     const password = document.getElementById('newPassword').value;
     const role = document.getElementById('newUserRole').value;
+    const userGroup = document.getElementById('newUserGroup').value.trim();
     
     if (!username || !password) {
         showToast('请填写完整信息', 'error');
@@ -1104,7 +1106,7 @@ async function handleAddUser(e) {
     }
     
     try {
-        const response = await userAPI.create(username, password, role);
+        const response = await userAPI.create(username, password, role, userGroup);
         
         if (response.success) {
             showToast('用户添加成功');
@@ -1119,7 +1121,7 @@ async function handleAddUser(e) {
 }
 
 // 编辑用户
-function editUser(userId, username, role, isSuperAdmin) {
+function editUser(userId, username, role, isSuperAdmin, userGroup) {
     if (isSuperAdmin && userId !== localStorage.getItem('userId')) {
         showToast('不能修改超级管理员信息', 'error');
         return;
@@ -1129,6 +1131,7 @@ function editUser(userId, username, role, isSuperAdmin) {
     document.getElementById('editUserId').value = userId;
     document.getElementById('editUsername').value = username;
     document.getElementById('editUserRole').value = role;
+    document.getElementById('editUserGroup').value = userGroup || '';
     
     // 超级管理员不能修改自己的角色
     if (isSuperAdmin) {
@@ -1147,6 +1150,7 @@ async function handleEditUser(e) {
     const userId = document.getElementById('editUserId').value;
     const username = document.getElementById('editUsername').value.trim();
     const role = document.getElementById('editUserRole').value;
+    const userGroup = document.getElementById('editUserGroup').value.trim();
     
     if (!username) {
         showToast('用户名不能为空', 'error');
@@ -1154,7 +1158,7 @@ async function handleEditUser(e) {
     }
     
     try {
-        const response = await userAPI.update(userId, username, role);
+        const response = await userAPI.update(userId, { username, role, userGroup });
         
         if (response.success) {
             showToast('用户信息更新成功');

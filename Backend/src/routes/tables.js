@@ -13,7 +13,22 @@ router.use(authMiddleware);
 // 获取所有签到表
 router.get('/', async (req, res) => {
   try {
-    const tables = await Table.find().sort({ createdAt: -1 });
+    const { userGroup: queryUserGroup } = req.query;
+    const { isSuperAdmin, userGroup } = req.user;
+
+    const filter = {};
+
+    if (isSuperAdmin) {
+      // 超级管理员可以查看所有，或按指定用户组筛选
+      if (queryUserGroup) {
+        filter.userGroup = queryUserGroup;
+      }
+    } else {
+      // 普通用户和管理员只能查看自己用户组的
+      filter.userGroup = userGroup;
+    }
+
+    const tables = await Table.find(filter).sort({ createdAt: -1 });
     
     // 获取每个表格的成员数量
     const tablesWithCount = await Promise.all(
@@ -57,10 +72,12 @@ router.post('/', [
     }
 
     const { name, description } = req.body;
+    const { userGroup } = req.user;
 
     const table = new Table({
       name,
-      description: description || ''
+      description: description || '',
+      userGroup: userGroup
     });
 
     await table.save();

@@ -59,7 +59,8 @@ router.get('/:id', async (req, res) => {
 router.post('/', [
   body('username').trim().notEmpty().withMessage('用户名不能为空'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
-  body('role').isIn(['user', 'admin', 'superadmin']).withMessage('角色不合法')
+  body('role').isIn(['user', 'admin', 'superadmin']).withMessage('角色不合法'),
+  body('userGroup').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -70,7 +71,7 @@ router.post('/', [
       });
     }
 
-    const { username, password, role } = req.body;
+    const { username, password, role, userGroup } = req.body;
 
     // 检查用户名是否已存在
     const existingUser = await User.findOne({ username });
@@ -94,6 +95,7 @@ router.post('/', [
       username,
       password,
       role,
+      userGroup: userGroup || '默认组',
       isSuperAdmin: false,
       createdBy: req.user.userId
     });
@@ -123,7 +125,8 @@ router.post('/', [
 // 更新用户信息（不包括密码）
 router.put('/:id', [
   body('username').optional().trim().notEmpty().withMessage('用户名不能为空'),
-  body('role').optional().isIn(['user', 'admin', 'superadmin']).withMessage('角色不合法')
+  body('role').optional().isIn(['user', 'admin', 'superadmin']).withMessage('角色不合法'),
+  body('userGroup').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -134,7 +137,7 @@ router.put('/:id', [
       });
     }
 
-    const { username, role } = req.body;
+    const { username, role, userGroup } = req.body;
     const userId = req.params.id;
 
     // 不能修改自己的账户
@@ -183,6 +186,10 @@ router.put('/:id', [
 
     if (role) {
       user.role = role;
+    }
+
+    if (userGroup) {
+      user.userGroup = userGroup;
     }
 
     user.updatedAt = Date.now();

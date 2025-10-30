@@ -10,6 +10,10 @@ const tableSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  userGroup: {
+    type: String,
+    default: '默认组'
+  },
   status: {
     type: String,
     enum: ['active', 'inactive'],

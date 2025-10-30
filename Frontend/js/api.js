@@ -203,10 +203,10 @@ const userAPI = {
     getById: (id) => api.get(`/users/${id}`),
     
     // 创建用户
-    create: (username, password, role) => api.post('/users', { username, password, role }),
+    create: (username, password, role, userGroup) => api.post('/users', { username, password, role, userGroup }),
     
     // 更新用户信息
-    update: (id, username, role) => api.put(`/users/${id}`, { username, role }),
+    update: (id, data) => api.put(`/users/${id}`, data),
     
     // 修改用户密码
     changePassword: (id, newPassword) => api.put(`/users/${id}/password`, { newPassword }),
