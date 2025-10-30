@@ -511,6 +511,18 @@ function openAddMemberModal() {
         showToast('请先创建签到表', 'error');
         return;
     }
+
+    // 如果在成员管理页面已经选择了表格，则在添加成员时默认选中该表格
+    const tableFilter = document.getElementById('tableFilter');
+    const memberTableSelect = document.getElementById('memberTable');
+    
+    if (tableFilter && memberTableSelect && tableFilter.value) {
+        memberTableSelect.value = tableFilter.value;
+    } else if (memberTableSelect) {
+        // 否则，确保没有残留选项
+        memberTableSelect.value = '';
+    }
+
     showModal('addMemberModal');
 }
 
