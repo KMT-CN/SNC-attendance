@@ -141,6 +141,8 @@ sudo systemctl restart caddy
 
 ### 创建管理员账户
 
+系统中的第一个注册用户将自动成为 **管理员**。请使用以下命令创建您的管理员账户，并将 `YourSecurePassword123` 替换为您自己的强密码。
+
 ```bash
 # 通过反向代理访问
 curl -X POST https://your-domain.com/api/auth/register \

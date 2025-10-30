@@ -1,7 +1,18 @@
 {
+  "name": "snc-attendance-frontend",
+  "version": "1.0.0",
+  "description": "签到签退系统前端",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "pn532.js": "^0.1.19",
-    "vite": "^7.1.12"
+    "lodash": "^4.17.21"
   }
 }

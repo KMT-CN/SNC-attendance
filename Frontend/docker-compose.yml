@@ -1,0 +1,16 @@
+services:
+  frontend:
+    image: kmtcn/snc-attendance-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snc-attendance-frontend
+    restart: always
+    ports:
+      - "127.0.0.1:8080:80" # 将前端映射到 8080 端口
+    networks:
+      - attendance-network
+
+networks:
+  attendance-network:
+    driver: bridge
