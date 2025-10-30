@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 
 # ANSI 颜色代码（PowerShell 在某些终端中不完全支持，但在现代终端中通常可用）
 $RED = "`e[31m"

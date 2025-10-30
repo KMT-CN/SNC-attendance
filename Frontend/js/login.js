@@ -35,12 +35,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         toggleFormBtn.style.display = 'none';
         console.log('检测到首次使用，显示注册表单');
     } else {
-        // 已有用户，完全隐藏注册功能
-        // 只显示登录表单，不允许注册
+        // 已有用户，显示登录表单，并允许切换到注册
         loginForm.style.display = 'block';
         registerForm.style.display = 'none';
-        toggleFormBtn.style.display = 'none'; // 隐藏切换按钮，不允许切换到注册
-        console.log('系统已初始化，仅显示登录表单');
+        toggleFormBtn.style.display = 'block'; // 允许切换
+        console.log('系统已初始化，显示登录表单');
     }
 
     // 表单切换
