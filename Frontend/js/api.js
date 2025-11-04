@@ -5,10 +5,10 @@ const API_CONFIG = {
     // 前后端分别部署时,需要修改为实际的后端地址
     
     // Docker Compose 统一部署（通过 Nginx 反向代理）
-    BASE_URL: '/api',
+    // BASE_URL: '/api',
     
     // 前后端分别部署（直接访问后端端口）
-    // BASE_URL: 'http://127.0.0.1:10234/api',
+    BASE_URL: 'http://backend:10234/api',
     
     // 生产环境（使用独立域名）
     // BASE_URL: 'https://api.your-domain.com/api',
