@@ -218,3 +218,6 @@ const userAPI = {
     // 批量删除用户
     batchDelete: (userIds) => api.post('/users/batch-delete', { userIds })
 };
+
+// 导出供其他模块使用
+export { api, API_CONFIG, authAPI, tableAPI, memberAPI, recordAPI, settingsAPI, userAPI };

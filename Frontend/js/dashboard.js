@@ -1,3 +1,4 @@
+import { api, authAPI, tableAPI, memberAPI, recordAPI, settingsAPI, userAPI } from './api.js';
 // 管理面板逻辑
 document.addEventListener('DOMContentLoaded', function() {
     // 检查登录状态
