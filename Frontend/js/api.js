@@ -1,16 +1,17 @@
 // API 配置文件
 const API_CONFIG = {
     // 后端 API 地址 - 根据实际部署修改
-    // 后端默认监听 127.0.0.1:10234，需要通过反向代理访问
+    // Docker Compose 部署时,使用相对路径通过 Nginx 反向代理访问
+    // 前后端分别部署时,需要修改为实际的后端地址
     
-    // 生产环境（使用反向代理域名）
-    BASE_URL: 'http://127.0.0.1:10234/api',
+    // Docker Compose 统一部署（通过 Nginx 反向代理）
+    BASE_URL: '/api',
     
-    // 或者使用子域名
+    // 前后端分别部署（直接访问后端端口）
+    // BASE_URL: 'http://127.0.0.1:10234/api',
+    
+    // 生产环境（使用独立域名）
     // BASE_URL: 'https://api.your-domain.com/api',
-    
-    // 本地开发（直接访问后端端口）
-    // BASE_URL: 'http://localhost:10234/api',
     
     // 超时设置（毫秒）
     TIMEOUT: 30000,

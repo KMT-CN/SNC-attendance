@@ -1,0 +1,107 @@
+version: "3.9"
+
+services:
+  # ==================== MongoDB 数据库 ====================
+  mongodb:
+    image: mongo:7.0
+    container_name: snc-attendance-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      # 🔒 生产环境请修改此密码
+      MONGO_INITDB_ROOT_PASSWORD: snc_attendance_2025
+      MONGO_INITDB_DATABASE: attendance
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      # 🌐 如需外部访问,改为 "27017:27017" (不推荐)
+      - "127.0.0.1:27017:27017"
+    networks:
+      - attendance-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 30s
+      retries: 15
+      start_period: 50s
+
+  # ==================== Node.js 后端服务 ====================
+  backend:
+    image: kmtcn/snc-attendance-backend:latest
+    container_name: snc-attendance-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      # 🔧 后端端口(默认 10234)
+      PORT: 10234
+      # 🔒 注意:此处密码需与上方 MongoDB 密码一致
+      MONGODB_URI: mongodb://admin:snc_attendance_2025@mongodb:27017/attendance?authSource=admin
+      # 🔒 生产环境必须修改此 JWT 密钥(使用强随机字符串)
+      JWT_SECRET: snc_attendance_jwt_secret_key_2025_change_in_production
+      # ⏰ Token 有效期(默认 7 天)
+      JWT_EXPIRES_IN: 7d
+      # 🌐 跨域配置(如前端独立域名,改为具体域名)
+      CORS_ORIGIN: "*"
+    ports:
+      # 🔧 如需修改端口,格式: "外部端口:10234",如 "20234:10234"
+      - "127.0.0.1:10234:10234"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - attendance-network
+    volumes:
+      - backend_logs:/app/logs
+
+  # ==================== 前端服务 ====================
+  frontend:
+    image: kmtcn/snc-attendance-frontend:latest
+    container_name: snc-attendance-frontend
+    restart: always
+    ports:
+      # 🔧 如需修改端口,格式: "外部端口:80",如 "18080:80"
+      - "127.0.0.1:8080:80"
+    networks:
+      - attendance-network
+    depends_on:
+      - backend
+
+# ==================== 网络配置 ====================
+networks:
+  attendance-network:
+    driver: bridge
+
+# ==================== 数据持久化 ====================
+volumes:
+  mongodb_data:
+    driver: local
+  backend_logs:
+    driver: local
+
+# ==================== 使用说明 ====================
+# 
+# 1️⃣  启动服务:
+#     docker-compose up -d
+# 
+# 2️⃣  查看日志:
+#     docker-compose logs -f
+# 
+# 3️⃣  停止服务:
+#     docker-compose down
+# 
+# 4️⃣  更新服务:
+#     docker-compose pull && docker-compose up -d
+# 
+# 5️⃣  完全清理(含数据):
+#     docker-compose down -v
+# 
+# 📍 服务地址:
+#     前端: http://localhost:8080
+#     后端: http://localhost:10234
+# 
+# 🔒 生产环境部署检查清单:
+#     ☑ 修改 MongoDB 密码
+#     ☑ 修改 JWT_SECRET
+#     ☑ 配置 CORS_ORIGIN
+#     ☑ 考虑使用反向代理(Nginx/Caddy)
+#     ☑ 启用 HTTPS
