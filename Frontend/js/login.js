@@ -1,4 +1,6 @@
 // 登录页面逻辑
+import {api} from './api.js';
+
 document.addEventListener('DOMContentLoaded', async function() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
