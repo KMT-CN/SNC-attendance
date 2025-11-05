@@ -2,11 +2,16 @@ import { api, authAPI, tableAPI, memberAPI, recordAPI, settingsAPI, userAPI } fr
 // 管理面板逻辑
 document.addEventListener('DOMContentLoaded', function() {
     // 检查登录状态
-    if (!api.getToken()) {
+    const token = api.getToken();
+    console.log('Dashboard 加载，Token 状态:', token ? '存在' : '不存在');
+    
+    if (!token) {
+        console.log('未找到 Token，跳转到登录页');
         window.location.href = 'index.html';
         return;
     }
 
+    console.log('Token 验证通过，初始化应用...');
     // 初始化
     initializeApp();
 });
@@ -26,22 +31,32 @@ let pn532Controller = null;
 
 // 初始化应用
 function initializeApp() {
+    console.log('初始化应用...');
+    
     // 显示用户名
     const usernameElement = document.getElementById('username');
-    usernameElement.textContent = localStorage.getItem('username') || '管理员';
+    const storedUsername = localStorage.getItem('username');
+    usernameElement.textContent = storedUsername || '管理员';
+    console.log('当前用户:', storedUsername);
     
     // 获取当前用户信息
     const userRole = localStorage.getItem('userRole');
     const isSuperAdmin = localStorage.getItem('isSuperAdmin') === 'true';
+    console.log('用户角色:', userRole, '超级管理员:', isSuperAdmin);
+    
     currentUser = {
-        username: localStorage.getItem('username'),
+        username: storedUsername,
         role: userRole,
         isSuperAdmin: isSuperAdmin
     };
 
     // 如果是超级管理员，显示用户管理菜单
     if (isSuperAdmin) {
-        document.getElementById('usersNavItem').style.display = 'block';
+        const usersNavItem = document.getElementById('usersNavItem');
+        if (usersNavItem) {
+            usersNavItem.style.display = 'block';
+            console.log('显示用户管理菜单');
+        }
     }
 
     // 加载数据
@@ -52,6 +67,8 @@ function initializeApp() {
 
     // 初始显示
     updateDisplay();
+    
+    console.log('应用初始化完成');
 }
 
 // 启动读卡器：动态导入模块并用当前设置创建控制器
@@ -94,14 +111,19 @@ function stopCardListener() {
 // 加载数据
 async function loadData() {
     try {
+        console.log('开始加载数据...');
         // 从后端 API 加载数据
         const [tablesResponse, membersResponse, recordsResponse, settingsResponse] = await Promise.all([
             tableAPI.getAll(),
             memberAPI.getAll(),
             recordAPI.getAll(),
-            settingsAPI.getAll().catch(() => ({ success: true, data: {} }))
+            settingsAPI.getAll().catch(err => {
+                console.error('加载设置失败:', err);
+                return { success: true, data: {} };
+            })
         ]);
 
+        console.log('数据加载成功');
         tables = tablesResponse.data || [];
         members = membersResponse.data || [];
         records = recordsResponse.data || [];
@@ -115,6 +137,7 @@ async function loadData() {
             try {
                 const usersResponse = await userAPI.getAll();
                 users = usersResponse.data || [];
+                console.log('用户列表加载成功');
             } catch (error) {
                 console.error('Load users error:', error);
             }
@@ -123,6 +146,7 @@ async function loadData() {
     } catch (error) {
         console.error('Load data error:', error);
         showToast('加载数据失败: ' + error.message, 'error');
+        // 如果是认证错误，不在这里处理，让 api.js 的统一处理来跳转
     }
 }
 

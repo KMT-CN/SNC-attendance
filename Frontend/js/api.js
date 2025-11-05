@@ -24,6 +24,7 @@ const API_CONFIG = {
 class API {
     constructor(baseURL) {
         this.baseURL = baseURL;
+        this.isRedirecting = false; // 防止重复跳转
     }
 
     // 获取存储的 Token
@@ -66,9 +67,22 @@ class API {
             if (!response.ok) {
                 // 如果是 401 未授权，清除 Token 并跳转到登录页
                 if (response.status === 401) {
+                    console.error('401 Unauthorized - clearing token and redirecting to login');
                     this.clearToken();
-                    if (window.location.pathname !== '/index.html' && !window.location.pathname.endsWith('/')) {
-                        window.location.href = 'index.html';
+                    // 清除所有用户相关的 localStorage 数据
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('isSuperAdmin');
+                    
+                    // 只有在不是登录页时才跳转，避免循环，并且防止重复跳转
+                    const currentPath = window.location.pathname;
+                    if (!this.isRedirecting && !currentPath.endsWith('/index.html') && !currentPath.endsWith('/')) {
+                        this.isRedirecting = true;
+                        // 延迟跳转，避免重复跳转
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 100);
                     }
                 }
                 throw new Error(data.message || '请求失败');
