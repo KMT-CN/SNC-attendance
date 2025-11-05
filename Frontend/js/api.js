@@ -4,14 +4,24 @@ const API_CONFIG = {
     // Docker Compose 部署时,使用相对路径通过 Nginx 反向代理访问
     // 前后端分别部署时,需要修改为实际的后端地址
     
-    // 使用相对路径,通过前端 Nginx 反向代理访问后端
-    // 这样无论是通过域名、IP 还是 localhost 访问,都能正常工作
-    BASE_URL: '/api',
-    
-    // 其他配置选项(根据实际情况取消注释):
-    // BASE_URL: 'http://localhost:10234/api',  // 本地开发,直接访问后端
-    // BASE_URL: 'http://YOUR_VPS_IP:10234/api',  // 跨域访问远程后端
-    // BASE_URL: 'https://api.yourdomain.com/api',  // 后端独立域名
+    // 自动检测部署方式
+    // 如果在浏览器中运行且不是直接访问文件，使用相对路径
+    BASE_URL: (() => {
+        // 检查是否通过 file:// 协议访问（本地文件）
+        if (window.location.protocol === 'file:') {
+            console.warn('检测到本地文件访问，请配置正确的 API 地址');
+            return 'http://localhost:10234/api';
+        }
+        
+        // Docker Compose 部署：使用相对路径，通过前端 Nginx 反向代理
+        // 这样无论是通过域名、IP 还是 localhost 访问，都能正常工作
+        return '/api';
+        
+        // 其他部署方式（手动取消注释使用）:
+        // return 'http://localhost:10234/api';  // 本地开发，直接访问后端
+        // return 'http://YOUR_VPS_IP:10234/api';  // 跨域访问远程后端
+        // return 'https://api.yourdomain.com/api';  // 后端独立域名
+    })(),
     
     // 超时设置（毫秒）
     TIMEOUT: 30000,
@@ -19,6 +29,12 @@ const API_CONFIG = {
     // Token 存储键名
     TOKEN_KEY: 'attendance_token'
 };
+
+// 输出配置信息用于调试
+console.log('📋 API 配置:');
+console.log('  - BASE_URL:', API_CONFIG.BASE_URL);
+console.log('  - 当前域名:', window.location.origin);
+console.log('  - 当前路径:', window.location.pathname);
 
 // API 请求封装类
 class API {
@@ -45,6 +61,9 @@ class API {
     // 通用请求方法
     async request(url, options = {}) {
         const token = this.getToken();
+        const fullUrl = `${this.baseURL}${url}`;
+        
+        console.log(`🌐 API 请求: ${options.method || 'GET'} ${fullUrl}`);
         
         const config = {
             method: options.method || 'GET',
@@ -61,13 +80,23 @@ class API {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}${url}`, config);
-            const data = await response.json();
+            const response = await fetch(fullUrl, config);
+            
+            console.log(`📡 API 响应: ${response.status} ${response.statusText} - ${fullUrl}`);
+            
+            // 尝试解析 JSON，但要处理可能的解析失败
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('JSON 解析失败:', parseError);
+                throw new Error('服务器响应格式错误');
+            }
 
             if (!response.ok) {
                 // 如果是 401 未授权，清除 Token 并跳转到登录页
                 if (response.status === 401) {
-                    console.error('401 Unauthorized - clearing token and redirecting to login');
+                    console.error('❌ 401 Unauthorized - clearing token and redirecting to login');
                     this.clearToken();
                     // 清除所有用户相关的 localStorage 数据
                     localStorage.removeItem('username');
@@ -79,18 +108,29 @@ class API {
                     const currentPath = window.location.pathname;
                     if (!this.isRedirecting && !currentPath.endsWith('/index.html') && !currentPath.endsWith('/')) {
                         this.isRedirecting = true;
+                        console.log('⏩ 跳转到登录页...');
                         // 延迟跳转，避免重复跳转
                         setTimeout(() => {
                             window.location.href = 'index.html';
                         }, 100);
                     }
                 }
+                
+                console.error(`❌ API 错误 [${response.status}]:`, data.message);
                 throw new Error(data.message || '请求失败');
             }
 
+            console.log(`✅ API 成功:`, fullUrl);
             return data;
         } catch (error) {
-            console.error('API Request Error:', error);
+            // 区分网络错误和 API 错误
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                console.error('❌ 网络错误 - 无法连接到服务器:', fullUrl);
+                console.error('请检查：1) 后端服务是否运行  2) Nginx 反向代理配置  3) 网络连接');
+                throw new Error('无法连接到服务器，请检查网络或联系管理员');
+            }
+            
+            console.error('❌ API Request Error:', error);
             throw error;
         }
     }
