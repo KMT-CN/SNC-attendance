@@ -4,14 +4,14 @@ const API_CONFIG = {
     // Docker Compose 部署时,使用相对路径通过 Nginx 反向代理访问
     // 前后端分别部署时,需要修改为实际的后端地址
     
-    // Docker Compose 统一部署（通过 Nginx 反向代理）
-    // BASE_URL: '/api',
+    // 使用相对路径,通过前端 Nginx 反向代理访问后端
+    // 这样无论是通过域名、IP 还是 localhost 访问,都能正常工作
+    BASE_URL: '/api',
     
-    // 前后端分别部署（直接访问后端端口）
-    BASE_URL: 'http://backend:10234/api',
-    
-    // 生产环境（使用独立域名）
-    // BASE_URL: 'https://api.your-domain.com/api',
+    // 其他配置选项(根据实际情况取消注释):
+    // BASE_URL: 'http://localhost:10234/api',  // 本地开发,直接访问后端
+    // BASE_URL: 'http://YOUR_VPS_IP:10234/api',  // 跨域访问远程后端
+    // BASE_URL: 'https://api.yourdomain.com/api',  // 后端独立域名
     
     // 超时设置（毫秒）
     TIMEOUT: 30000,
