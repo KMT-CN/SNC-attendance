@@ -80,7 +80,7 @@ async function startCardListener() {
     }
 
     try {
-        const mod = await import('./pn532.js');
+        const mod = await import('./pn532-port.js');
         if (!mod || !mod.createPN532) {
             throw new Error('pn532 模块缺少 createPN532 导出');
         }
