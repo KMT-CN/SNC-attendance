@@ -12,7 +12,10 @@ const API_CONFIG = {
             console.warn('检测到本地文件访问，请配置正确的 API 地址');
             return 'http://localhost:10234/api';
         }
-        
+        // npm run dev 或 npm run preview 启动的开发环境
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:10234/api';
+        }
         // Docker Compose 部署：使用相对路径，通过前端 Nginx 反向代理
         // 这样无论是通过域名、IP 还是 localhost 访问，都能正常工作
         return '/api';
