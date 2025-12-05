@@ -991,3 +991,102 @@ input[type="checkbox"]:checked::after {
 .text-warning { color: var(--warning-color) !important; }
 .text-info { color: var(--info-color) !important; }
 
+
+/* =========================================
+   修复样式问题
+   ========================================= */
+
+/* 修复单选框和复选框�?form-group 中的样式问题 */
+.form-group input[type="radio"],
+.form-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--text-secondary);
+    box-shadow: none;
+    display: inline-block;
+    margin-right: 12px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.form-group input[type="radio"]:focus,
+.form-group input[type="checkbox"]:focus {
+    box-shadow: none;
+    background: transparent;
+}
+
+/* 单选框特定样式 */
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 50%;
+    position: relative;
+}
+
+input[type="radio"]:checked {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 优化模式选择器布局 */
+.mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.mode-selector .form-group {
+    margin-bottom: 0;
+}
+
+.mode-selector button {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.mode-selector label {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.mode-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mode-label strong {
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.mode-label small {
+    font-weight: normal;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* 响应式调�?*/
+@media (max-width: 600px) {
+    .mode-selector {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

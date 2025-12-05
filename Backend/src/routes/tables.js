@@ -74,6 +74,15 @@ router.post('/', [
     const { name, description } = req.body;
     const { userGroup } = req.user;
 
+    // 检查是否已存在同名表格
+    const existingTable = await Table.findOne({ name, userGroup });
+    if (existingTable) {
+      return res.status(400).json({
+        success: false,
+        message: '该签到表名称已存在'
+      });
+    }
+
     const table = new Table({
       name,
       description: description || '',

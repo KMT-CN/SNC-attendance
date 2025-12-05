@@ -815,8 +815,9 @@ function handleExport(format) {
         return;
     }
 
-    const table = tables.find(t => t.id === parseInt(tableId));
-    const tableMembers = members.filter(m => m.tableId === parseInt(tableId));
+    // 修复：移除 parseInt，直接比较字符串
+    const table = tables.find(t => t.id === tableId);
+    const tableMembers = members.filter(m => m.tableId === tableId);
 
     if (tableMembers.length === 0) {
         showToast('该表格没有成员数据', 'error');
@@ -832,18 +833,64 @@ function handleExport(format) {
     showToast(`正在导出为 ${format.toUpperCase()} 格式...`);
 }
 
-// 导出为Excel（实际应该使用库如 xlsx）
+// 导出为Excel
 function exportToExcel(table, tableMembers) {
-    // 这里是简化版本，实际应该使用 SheetJS (xlsx) 库
-    const data = tableMembers.map(m => ({
-        '姓名': m.name,
-        '学号/工号': m.employeeId,
-        '联系方式': m.contact || '-',
-        '加入时间': formatDate(m.joinedAt)
-    }));
+    // 获取该表格的所有签到记录
+    const tableRecords = records.filter(r => r.tableId === table.id);
+    
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    html += '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>签到记录</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
+    html += '<body><table border="1">';
+    
+    // 表头
+    html += '<thead><tr>';
+    const headers = ['姓名', '学号/工号', '联系方式', '签到日期', '签到时间', '签退日期', '签退时间', '状态'];
+    headers.forEach(h => html += `<th>${h}</th>`);
+    html += '</tr></thead><tbody>';
+    
+    // 数据行
+    tableMembers.forEach(member => {
+        const memberRecords = tableRecords.filter(r => r.memberId === member.id);
+        
+        if (memberRecords.length === 0) {
+            html += '<tr>';
+            html += `<td>${escapeHtml(member.name)}</td>`;
+            html += `<td>${escapeHtml(member.employeeId)}</td>`;
+            html += `<td>${escapeHtml(member.contact || '-')}</td>`;
+            html += '<td>-</td><td>-</td><td>-</td><td>-</td><td>未签到</td>';
+            html += '</tr>';
+        } else {
+            memberRecords.forEach(record => {
+                let status = '未签到';
+                if (record.status === 'completed') status = '已完成';
+                else if (record.status === 'checkedin') status = '已签到';
+                
+                html += '<tr>';
+                html += `<td>${escapeHtml(member.name)}</td>`;
+                html += `<td>${escapeHtml(member.employeeId)}</td>`;
+                html += `<td>${escapeHtml(member.contact || '-')}</td>`;
+                html += `<td>${record.checkinDate || '-'}</td>`;
+                html += `<td>${record.checkinTime || '-'}</td>`;
+                html += `<td>${record.checkoutDate || '-'}</td>`;
+                html += `<td>${record.checkoutTime || '-'}</td>`;
+                html += `<td>${status}</td>`;
+                html += '</tr>';
+            });
+        }
+    });
+    
+    html += '</tbody></table></body></html>';
 
-    console.log('Export to Excel:', table.name, data);
-    showToast('Excel导出功能需要集成相关库', 'error');
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${table.name}_${formatDateOnly(new Date())}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // 导出为CSV
@@ -1260,3 +1307,15 @@ function deleteUser(userId, username) {
         }
     });
 }
+
+// 暴露函数给全局作用域，以便 HTML 中的 onclick 可以调用
+window.viewTable = viewTable;
+window.deleteTable = deleteTable;
+window.deleteMember = deleteMember;
+window.editRecord = editRecord;
+window.deleteRecord = deleteRecord;
+window.bindCard = bindCard;
+window.unbindCard = unbindCard;
+window.editUser = editUser;
+window.openChangePasswordModal = openChangePasswordModal;
+window.deleteUser = deleteUser;
