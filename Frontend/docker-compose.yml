@@ -6,6 +6,14 @@ services:
       dockerfile: Dockerfile
     container_name: snc-attendance-frontend
     restart: always
+    environment:
+      # 🔧 后端 API 地址 (Nginx 反向代理用)
+      # 分离部署时：填写后端服务器的实际地址，例如 http://192.168.1.100:10234
+      # 本地分离测试：可以使用 http://host.docker.internal:10234 (需 Docker 支持)
+      - BACKEND_API_URL=http://host.docker.internal:10234
+      # 🔧 前端 JS 请求的 API 基础路径 (可选)
+      # 默认为 /api (走 Nginx 反代)。如果需要前端直连后端，可修改为绝对路径
+      - JS_API_BASE_URL=/api
     ports:
       - "127.0.0.1:8080:80" # 将前端映射到 8080 端口
     networks:

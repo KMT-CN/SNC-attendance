@@ -42,9 +42,9 @@ services:
       JWT_EXPIRES_IN: 7d
       # 🌐 跨域配置(如前端独立域名,改为具体域名)
       CORS_ORIGIN: "*"
-    ports:
-      # 🔧 如需修改端口,格式: "外部端口:10234",如 "20234:10234"
-      - "127.0.0.1:10234:10234"
+    # ports:
+      # 🔧 后端不直接暴露端口，通过前端 Nginx 反向代理访问 /api
+      # - "127.0.0.1:10234:10234"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -58,6 +58,9 @@ services:
     image: kmtcn/snc-attendance-frontend:latest
     container_name: snc-attendance-frontend
     restart: always
+    environment:
+      # 🔧 统一部署时，直接使用服务名访问后端
+      - BACKEND_API_URL=http://backend:10234
     ports:
       # 🔧 如需修改端口,格式: "外部端口:80",如 "18080:80"
       - "127.0.0.1:8080:80"

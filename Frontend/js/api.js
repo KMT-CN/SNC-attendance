@@ -7,24 +7,31 @@ const API_CONFIG = {
     // 自动检测部署方式
     // 如果在浏览器中运行且不是直接访问文件，使用相对路径
     BASE_URL: (() => {
+        // 1. 优先使用运行时注入的配置 (Docker 部署时通过环境变量注入 config.js)
+        if (window.ENV && window.ENV.API_BASE_URL) {
+            return window.ENV.API_BASE_URL;
+        }
+
         // 检查是否通过 file:// 协议访问（本地文件）
         if (window.location.protocol === 'file:') {
             console.warn('检测到本地文件访问，请配置正确的 API 地址');
             return 'http://localhost:10234/api';
         }
-        // npm run dev 或 npm run preview 启动的开发环境
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            return 'http://localhost:10234/api';
-        }
-        // Docker Compose 部署：使用相对路径，通过前端 Nginx 反向代理
-        // 这样无论是通过域名、IP 还是 localhost 访问，都能正常工作
-        return '/api';
         
+        // 针对本地开发环境 (Vite 默认端口 5173)
+        // 如果是 Docker 部署 (通常是 8080)，则走下面的默认逻辑 /api
+        if (window.location.port === '5173') {
+             return 'http://localhost:10234/api';
+        }
+
+        // 默认使用相对路径，通过 Nginx 反向代理 (/api -> backend:10234)
+        // 适用于 Docker Compose 部署及生产环境
+        return '/api';
+    })(),
         // 其他部署方式（手动取消注释使用）:
         // return 'http://localhost:10234/api';  // 本地开发，直接访问后端
         // return 'http://YOUR_VPS_IP:10234/api';  // 跨域访问远程后端
         // return 'https://api.yourdomain.com/api';  // 后端独立域名
-    })(),
     
     // 超时设置（毫秒）
     TIMEOUT: 30000,
