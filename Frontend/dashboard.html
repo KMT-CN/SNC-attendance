@@ -26,7 +26,9 @@
                     <a href="#" class="nav-item" data-section="members">成员管理</a>
                     <a href="#" class="nav-item" data-section="records">签到记录</a>
                     <a href="#" class="nav-item" data-section="settings">系统设置</a>
-                    <a href="#" class="nav-item" data-section="users" id="usersNavItem" style="display: none;">👥 用户管理</a>
+                    <a href="#" class="nav-item" data-section="users" id="usersNavItem" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> 用户管理
+                    </a>
                     <button id="startListeningBtn" class="btn btn-primary">开始读卡</button>
                 </nav>
             </aside>
@@ -38,7 +40,7 @@
                     <div class="section-header">
                         <h2>签到表管理</h2>
                         <button class="btn btn-primary" id="createTableBtn">
-                            <span>➕</span> 创建新签到表
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 创建新签到表
                         </button>
                     </div>
 
@@ -69,7 +71,7 @@
                     <div class="section-header">
                         <h2>成员管理</h2>
                         <button class="btn btn-primary" id="addMemberBtn">
-                            <span>➕</span> 添加成员
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 添加成员
                         </button>
                     </div>
 
@@ -400,7 +402,7 @@
                         <label for="cardId">卡片ID *</label>
                         <input type="text" id="cardId" name="cardId" class="form-control" required 
                                placeholder="请输入卡片ID或刷卡读取">
-                        <small style="color: #6c757d;">提示：可以在读卡器页面获取卡片ID</small>
+                        <small class="text-muted">提示：可以在读卡器页面获取卡片ID</small>
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" data-modal="bindCardModal">取消</button>
@@ -436,7 +438,7 @@
                             <option value="user">普通用户</option>
                             <option value="admin">管理员</option>
                         </select>
-                        <small style="color: #6c757d;">提示：超级管理员只能由首次注册用户获得</small>
+                        <small class="text-muted">提示：超级管理员只能由首次注册用户获得</small>
                     </div>
                     <div class="form-group">
                         <label for="newUserGroup">用户组</label>

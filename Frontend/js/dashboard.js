@@ -352,8 +352,8 @@ function updateMembersDisplay() {
 
     tbody.innerHTML = filteredMembers.map(member => {
         const cardStatus = member.cardId ? 
-            `<span style="color: #28a745;">✓ 已绑定</span>` : 
-            `<span style="color: #6c757d;">未绑定</span>`;
+            `<span class="text-success">✓ 已绑定</span>` : 
+            `<span class="text-secondary">未绑定</span>`;
         
         const cardAction = member.cardId ? 
             `<button class="btn btn-secondary" onclick="unbindCard('${member.id}')">解绑卡片</button>` : 
