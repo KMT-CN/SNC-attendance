@@ -73,11 +73,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 启动服务器 - 只监听 127.0.0.1
+// 启动服务器
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 服务器启动成功: http://127.0.0.1:${PORT}`);
+  console.log(`🚀 服务器启动成功: http://0.0.0.0:${PORT}`);
   console.log(`📝 环境: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`⚠️  后端只监听本地，请配置反向代理（Nginx/Caddy/Cloudflare Tunnel）对外提供服务`);
+  console.log(`⚠️  后端监听所有接口，请确保防火墙或反向代理配置正确`);
 });
 
 // 优雅关闭
